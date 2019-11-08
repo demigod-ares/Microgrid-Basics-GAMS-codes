@@ -48,7 +48,7 @@ Equation Genconst3, Genconst4, costThermalcalc, balance, EMcalc, EMlim, benefitc
 costThermalcalc.. costThermal =e= sum((t,i),gendata(i,'a')*power(p(i,t),2)+gendata(i,'b')*p(i,t)+gendata(i,'c'));
 Genconst3(i,t).. p(i,t+1)-p(i,t) =l= gendata(i,'RU0');
 Genconst4(i,t).. p(i,t-1)-p(i,t) =l= gendata(i,'RD0');
-balance(t).. sum(i,p(i,t)) =l= data(t,'load');
+balance(t).. sum(i,p(i,t)) =g= data(t,'load');
 EMcalc.. EM =e= sum((t,i),gendata(i,'d')*power(p(i,t),2)+gendata(i,'e')*p(i,t)+gendata(i,'f'));
 EMlim.. EM =l= lim;
 benefitcalc.. OF =e= sum((i,t),1*data(t,'lambdaE')*p(i,t)+data(t,'lambdaR')*SR(i,t))-costThermal;
