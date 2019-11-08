@@ -89,7 +89,7 @@ balance(area,t).. sum(i$AreaGen(area,i),p(i,t))+sum(w$AreaWind(area,w),Pw(w,t)) 
 RampUp(i,t).. p(i,t)-p(i,t-1) =l= gendata(i,'RU');
 RampDn(i,t).. p(i,t-1)-p(i,t) =l= gendata(i,'RD');
 *** Total cost of operating all generators over period of time.
-cost.. OF =e= sum((i,t),gendata(i,'a')*p(i,t)*p(i,t)+gendata(i,'b')*p(i,t)+gendata(i,'c'));
+cost.. OF =e= sum((i,t),gendata(i,'a')*power(p(i,t),2)+gendata(i,'b')*p(i,t)+gendata(i,'c'));
 
 Model EDC /all/;
 Solve EDC minimum OF using QCP;

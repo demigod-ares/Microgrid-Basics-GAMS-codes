@@ -16,11 +16,11 @@ Variable
    EM          'emission calculation';
 p.up(i,t) = gendata(i,"Pmax"); p.lo(i,t) = gendata(i,"Pmin");
 
-Equation Genconst3(i,t), Genconst4(i,t), costThermalcalc, balance(t), EMcalc;
+Equation RampUp(i,t), RampDn(i,t), costThermalcalc, balance(t), EMcalc;
 costThermalcalc.. costThermal =e= sum((t,i),gendata(i,'a')*sqr(p(i,t))+gendata(i,'b')*p(i,t)+gendata(i,'c'));
 *** Ramp up, Ramp down
-Genconst3(i,t).. p(i,t+1)-p(i,t) =l= gendata(i,'RU0');
-Genconst4(i,t).. p(i,t-1)-p(i,t) =l= gendata(i,'RD0');
+RampUp(i,t).. p(i,t+1)-p(i,t) =l= gendata(i,'RU0');
+RampDn(i,t).. p(i,t-1)-p(i,t) =l= gendata(i,'RD0');
 balance(t).. sum(i, p(i,t)) =g= demand(t);
 EMcalc.. EM =e= sum((t,i), gendata(i,'d')*sqr(p(i,t))+gendata(i,'e')*p(i,t)+gendata(i,'f'));
 

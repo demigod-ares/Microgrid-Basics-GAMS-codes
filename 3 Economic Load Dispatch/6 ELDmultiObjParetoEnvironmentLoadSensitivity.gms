@@ -38,4 +38,4 @@ Loop (Loadcounter,
    report3(Loadcounter,counter,gen) = P.l(gen); );
 *** this next statement is very important to Reset the TEmax to inf from Elim
  TE.up = inf; );
-display report, report2, report3;
+display report, report2, report3, TE.l, TC.l;

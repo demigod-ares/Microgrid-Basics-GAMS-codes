@@ -21,16 +21,17 @@ costThermalcalc.. costThermal =e= sum((t,i),gendata(i,'a')*sqr(p(i,t))+gendata(i
 Genconst3(i,t)..  p(i,t+1) - p(i,t) =l= gendata(i,'RU');
 Genconst4(i,t)..  p(i,t-1) - p(i,t) =l= gendata(i,'RD');
 balance(t)..      sum(i, p(i,t))    =g= demand(t);
+*** WTF? making it equal will change the whole game???
 EMcalc..          EM =e= sum((t,i), gendata(i,'d')*sqr(p(i,t)) + gendata(i,'e')*p(i,t) + gendata(i,'f'));
 EMlim.. EM =l= lim;
 Model DEDcostbased /all/;
 Parameter report1(counter,*),rep(*),report2(counter,i,t);
-Solve DEDcostbased using QCP mininimizing costThermal ;
+Solve DEDcostbased using QCP mininimizing costThermal;
 rep('TCmin') = costThermal.l; rep('EMmax') = EM.l;
 Solve DEDcostbased using QCP minimizing EM;
 rep('TCmax') = costThermal.l; rep('EMmin') = EM.l;
 loop(counter,
-    lim = rep('EMmax')+(rep('EMmin')-rep('EMmax'))*(ord(counter)-1)/(card(counter)-1);
+    lim = rep('EMmin')+(rep('EMmax')-rep('EMmin'))*(ord(counter)-1)/(card(counter)-1);
     Solve DEDcostbased using QCP minimizing costThermal ;
     report1(counter,'Epsilon') = lim;
     report1(counter,'TC') = costThermal.l;
