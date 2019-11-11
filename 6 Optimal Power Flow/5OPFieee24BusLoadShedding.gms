@@ -1,4 +1,5 @@
 *** OPF IEEE Reliability test 24-bus network with load shedding modeling
+* generator 10 outage problem is solved using load shedding
 Set bus/1*24/, slack(bus)/13/, Gen/g1*g12/;
 Scalar Sbase/100/, VOLL/10000/;
 Alias (bus,node);
@@ -13,7 +14,7 @@ Table GenData(Gen,*) 'generating units characteristics'
    g7   310  108.5  10.52 624    624    21   21   112  125  8    8    1    10  0
    g8   350  140    10.89 2298   2298   28   28   154  162  8    8    1    5   0
    g9   350  75     20.7  1725   1725   49   49   77   80   8    8    0    0   2
-   g10  591  206.85 20.93 3056.7 3056.7 21   21   213  228  12   10   0    0   8
+   g10  0    0      20.93 3056.7 3056.7 21   21   213  228  12   10   0    0   8
    g11  60   12     26.11 437    437    7    7    19   31   4    2    0    0   1
    g12  300  0      0     0      0      35   35   315  326  0    0    1    2   0;
 *  only Pmax, Pmin & b required for the above code
@@ -75,16 +76,17 @@ Table branch(bus,node,*) 'network technical characteristics'
    20.23   0.0014   0.0108   0.091   1000
    21.22   0.0087   0.0678   0.1424  500 ;
 branch(bus,node,'x')$(branch(bus,node,'x')=0) = branch(node,bus,'x');
-branch(bus,node,'Limit')$(branch(bus,node,'Limit')=0) = branch(node,bus,'Limit');
-branch(bus,node,'bij')$branch(bus,node,'Limit') = 1/branch(bus,node,'x');
+branch(bus,node,'Limit')$(branch(bus,node,'limit')=0) = branch(node,bus,'Limit');
+branch(bus,node,'bij')$branch(bus,node,'limit') = 1/branch(bus,node,'x');
 Parameter conex(bus,node);
-conex(bus,node)$(branch(bus,node,'limit') and branch(node,bus,'limit')) = 1;
-conex(bus,node)$(conex(node,bus)) = 1;
+conex(bus,node)$(branch(bus,node,'limit')) = 1;
 Variable OF, Pij(bus,node), Pg(Gen), delta(bus), lsh(bus);
 Equation const1, const2, const3;
 const1(bus,node)$(conex(bus,node)).. Pij(bus,node) =e= branch(bus,node,'bij')*(delta(bus)-delta(node));
 const2(bus).. lsh(bus)+sum(Gen$GB(bus,Gen),Pg(Gen))-BusData(bus,'pd')/Sbase =e= sum(node$conex(node,bus),Pij(bus,node));
+* only above equation has a change
 const3.. OF =g= sum((bus,Gen)$GB(bus,Gen),Pg(Gen)*GenData(Gen,'b')*Sbase)+sum(bus,VOLL*lsh(bus)*Sbase);
+* load shedded is also included in cost function
 Pg.lo(Gen) = GenData(Gen,'Pmin')/Sbase; Pg.up(Gen) = GenData(Gen,'Pmax')/Sbase;
 delta.up(bus)= pi/2; delta.lo(bus)= -pi/2; delta.fx(slack)= 0;
 Pij.up(bus,node)$((conex(bus,node)))= 1*branch(bus,node,'Limit')/Sbase;

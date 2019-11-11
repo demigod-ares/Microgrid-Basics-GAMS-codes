@@ -1,8 +1,8 @@
-*** Multi-period DC-OPF for IEEE 24-bus network considering wind and load shedding
-Set bus/1*24/, slack(bus)/13/, Gen/g1*g12/, t/t1*t24/;
-Scalar Sbase/100/, VOLL/10000/, VOLW/50/;
+*** OPF IEEE Reliability test 24-bus network
+Set bus/1*24/, slack(bus)/13/, Gen/g1*g12/;
+Scalar Sbase/100/;
 Alias (bus,node);
-Table GD(Gen,*) 'generating units characteristics'
+Table GenData(Gen,*) 'generating units characteristics'
         Pmax Pmin   b     CostsD costst RU   RD   SU   SD   UT   DT   uini U0  So
    g1   400  100    5.47  0      0      47   47   105  108  1    1    1    5   0
    g2   400  100    5.47  0      0      47   47   106  112  1    1    1    6   0
@@ -16,8 +16,9 @@ Table GD(Gen,*) 'generating units characteristics'
    g10  591  206.85 20.93 3056.7 3056.7 21   21   213  228  12   10   0    0   8
    g11  60   12     26.11 437    437    7    7    19   31   4    2    0    0   1
    g12  300  0      0     0      0      35   35   315  326  0    0    1    2   0;
+*  only Pmax, Pmin & b required for the above code
 Set GB(bus,Gen) 'connectivity index of each generating unit to each bus'
-/18.g1, 21.g2, 1.g3, 2.g4, 15.g5, 16.g6, 23.g7, 23.g8, 7.g9, 13.g10, 15.g11, 22.g12/;
+/18.g1,21.g2,1.g3,2.g4,15.g5,16.g6,23.g7,23.g8,7.g9,13.g10,15.g11,22.g12/;
 Table BusData(bus,*) 'demands of each bus in MW'
        Pd   Qd
    1   108  22
@@ -73,56 +74,40 @@ Table branch(bus,node,*) 'network technical characteristics'
    19.20   0.00255  0.0198   0.1666  1000
    20.23   0.0014   0.0108   0.091   1000
    21.22   0.0087   0.0678   0.1424  500 ;
-Table WD(t,*)
-        w                   d
-   t1   0.0786666666666667  0.684511335492475
-   t2   0.0866666666666667  0.644122690036197
-   t3   0.117333333333333   0.61306915602972
-   t4   0.258666666666667   0.599733282530006
-   t5   0.361333333333333   0.588874071251667
-   t6   0.566666666666667   0.5980186702229
-   t7   0.650666666666667   0.626786054486569
-   t8   0.566666666666667   0.651743189178891
-   t9   0.484               0.706039245570585
-   t10  0.548               0.787007048961707
-   t11  0.757333333333333   0.839016955610593
-   t12  0.710666666666667   0.852733854067441
-   t13  0.870666666666667   0.870642027052772
-   t14  0.932               0.834254143646409
-   t15  0.966666666666667   0.816536483139646
-   t16  1                   0.819394170318156
-   t17  0.869333333333333   0.874071251666984
-   t18  0.665333333333333   1
-   t19  0.656               0.983615926843208
-   t20  0.561333333333333   0.936368832158506
-   t21  0.565333333333333   0.887597637645266
-   t22  0.556               0.809297008954087
-   t23  0.724               0.74585635359116
-   t24  0.84                0.733473042484283;
-Parameter Wcap(bus) / 8 200, 19 150, 21 100 /;
 branch(bus,node,'x')$(branch(bus,node,'x')=0) = branch(node,bus,'x');
+* 30% reduction in branch flow limits.
+branch(bus,node,'Limit') = 0.7*branch(bus,node,'Limit');
 branch(bus,node,'Limit')$(branch(bus,node,'Limit')=0) = branch(node,bus,'Limit');
 branch(bus,node,'bij')$branch(bus,node,'Limit') = 1/branch(bus,node,'x');
-branch(bus,node,'z')$branch(bus,node,'Limit') = sqrt(sqr(branch(bus,node,'x'))+sqr(branch(bus,node,'r')));
-branch(node,bus,'z') = branch(bus,node,'z');
 Parameter conex(bus,node);
-conex(bus,node)$(branch(bus,node,'limit') and branch(node,bus,'limit')) = 1;
-conex(bus,node)$(conex(node,bus)) = 1;
-Variable OF, Pij(bus,node,t), Pg(Gen,t), delta(bus,t), lsh(bus,t), Pw(bus,t), Pc(bus,t);
-Equation const1, const2, const3, const4, const5, const6;
-const1(bus,node,t)$(conex(bus,node)).. Pij(bus,node,t) =e= branch(bus,node,'bij')*(delta(bus,t)-delta(node,t));
-const2(bus,t).. lsh(bus,t)$BusData(bus,'pd')+Pw(bus,t)$Wcap(bus)+sum(Gen$GB(bus,Gen),Pg(Gen,t))-WD(t,'d')*BusData(bus,'pd')/Sbase =e= sum(node$conex(node,bus),Pij(bus,node,t));
-const3.. OF =g= sum((bus,Gen,t)$GB(bus,Gen),Pg(Gen,t)*GD(Gen,'b')*Sbase)+sum((bus,t),VOLL*lsh(bus,t)*Sbase$BusData(bus,'pd')+VOLW*Pc(bus,t)*sbase$Wcap(bus));
-const4(gen,t).. pg(gen,t+1)-pg(gen,t) =l= GD(gen,'RU')/Sbase;
-const5(gen,t).. pg(gen,t-1)-pg(gen,t) =l= GD(gen,'RD')/Sbase;
-const6(bus,t)$Wcap(bus).. pc(bus,t) =e= WD(t,'w')*Wcap(bus)/Sbase-pw(bus,t);
-Pg.lo(Gen,t) = GD(Gen,'Pmin')/Sbase; Pg.up(Gen,t) = GD(Gen,'Pmax')/Sbase;
-delta.up(bus,t)= pi/2; delta.lo(bus,t)= -pi/2; delta.fx(slack,t)= 0;
-Pij.up(bus,node,t)$((conex(bus,node)))= 1*branch(bus,node,'Limit')/Sbase;
-Pij.lo(bus,node,t)$((conex(bus,node)))= -1*branch(bus,node,'Limit')/Sbase;
-lsh.up(bus,t)= WD(t,'d')*BusData(bus,'pd')/Sbase; lsh.lo(bus,t)= 0;
-Pw.up(bus,t)= WD(t,'w')*Wcap(bus)/Sbase; Pw.lo(bus,t)= 0;
-Pc.up(bus,t)= WD(t,'w')*Wcap(bus)/Sbase; Pc.lo(bus,t)= 0;
+conex(bus,node)$(branch(bus,node,'limit')) = 1;
+* Mirror is already taken care of...
+Variable OF, Pij(bus,node), Pg(Gen), delta(bus);
+Equation const1, const2, const3;
+const1(bus,node)$(conex(bus,node)).. Pij(bus,node) =e= branch(bus,node,'bij')*(delta(bus)-delta(node));
+const2(bus).. sum(Gen$GB(bus,Gen),Pg(Gen))-BusData(bus,'pd')/Sbase =e= sum(node$conex(node,bus),Pij(bus,node));
+const3.. OF =g= sum(Gen,Pg(Gen)*GenData(Gen,'b')*Sbase);
+Pg.lo(Gen) = GenData(Gen,'Pmin')/Sbase; Pg.up(Gen) = GenData(Gen,'Pmax')/Sbase;
+delta.up(bus)= pi/2; delta.lo(bus)= -pi/2; delta.fx(slack)= 0;
+Pij.up(bus,node)$((conex(bus,node)))= branch(bus,node,'Limit')/Sbase;
+Pij.lo(bus,node)$((conex(bus,node)))= -branch(bus,node,'Limit')/Sbase;
 Model loadflow /all/;
 Solve loadflow minimizing OF using LP;
-Display OF.l, Pij.l, Pg.l, delta.l, lsh.l, Pw.l, Pc.l;
+parameter report(bus,*), Congestioncost;
+report(bus,'Gen(MW)')= sum(Gen$GB(bus,Gen),Pg.l(Gen))*sbase ;
+report(bus,'Angle')= delta.l(bus);
+report(bus,'load(MW)')= BusData(bus,'pd');
+report(bus,'LMP($/MWh)')=const2.m(bus)/sbase;
+Congestioncost= sum((bus,node),Pij.l(bus,node)*(-const2.m(bus)+const2.m(node)))/2;
+display branch, conex, report, Pg.l, Pij.l, OF.l, Congestioncost;
+
+*** Branch Outage (Just make the limits of outage branch = 0)
+*Contingency 1: branch 20-19;12-23 are out. Congestion costs are $4905.000 and OF = $29,888.196. The congested lines are 13-23. The LMP values are not the same in different buses.
+*Contingency 2: branch 14-16;16-19 are out. Congestion costs are $6224.250 and OF = $32,199.855. The congested lines are 24-3;8-7. The LMP values are not the same in different buses.
+*Contingency 3: branch 1-5;4-2 are out. Congestion costs are $0 and OF = $29,574.275. No line would be congested and therefore the LMP values are the same in all buses.
+
+*** Generator Outage (Just make the limits of outage generator = 0) 
+*Contingency 1: The generating unit g9(connected to bus 7) is out. Solving the problem shows that no line is congested but removing the g9 will cause an increase in total operating costs which becomes OF = $29,633.420.
+*Contingency 2: The generating unit g5(connected to bus 15) is out. Solving the problem shows that line 8-7 is congested but removing the g5 will cause an increase in total operating costs which becomes OF = $30,328.570. The LMP values are different on different buses, and the congestion costs are $40.250.
+*Contingency 3: The generating unit g8(connected to bus 23) is out. Solving the problem shows that line 8-7 is congested but removing the g8 will cause an increase in total operating costs which becomes OF = $33,078.420. The LMP values are different on different buses, and the congestion costs are $40.250.
+*Contingency 4: The generating unit g10(connected to bus 13) is out. The problem becomes infeasible, and GAMS cannot find any solution for it. This is because no solution is found which satisfies the technical constraints. Some load shedding action should take place.

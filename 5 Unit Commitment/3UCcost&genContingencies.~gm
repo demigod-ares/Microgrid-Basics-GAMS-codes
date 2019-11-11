@@ -64,8 +64,7 @@ Positive Variable pu(i,t), p(i,t), STC(i,t), SDC(i,t), Pk(i,t,k);
 Binary Variable u(i,t), y(i,t), z(i,t);
 p.up(i,t)    = gendata(i,"Pmax"); p.lo(i,t)=0;
 Pk.up(i,t,k) = data(k,i,'DP'); Pk.lo(i,t,k)=0;
-*** Can't you see a redundant code just below & a line above.
-p.up(i,t)    = gendata(i,"Pmax"); pu.up(i,h)=gendata(i,"Pmax");
+pu.up(i,h)=gendata(i,"Pmax");
 *** Where the fuck are the reserve constrains???
 Equation Uptime1, Uptime2, Uptime3, Dntime1, Dntime2, Dntime3, Ramp1, Ramp2, Ramp3, Ramp4,
    startc, shtdnc, genconst1, Genconst2, Genconst3, Genconst4, balance, reserve;

@@ -18,3 +18,4 @@ P12.up = P12_max;
 delta.fx('1')=0;
 Model OPF / all /;
 solve OPF using QCP minimizing OF;
+display P.l, P12.l;

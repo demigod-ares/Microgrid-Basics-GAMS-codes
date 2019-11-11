@@ -1,9 +1,9 @@
 *** Unit commitment(cost based) using linear model
 Set
-   t 'time'               / t1*t24   /
-   i 'generators indices' / g1*g10   /
+   t 'time'               / t1*t24 /
+   i 'generators indices' / g1*g10 /
    k 'cost segments'      / sg1*sg20 /
-   char                   / ch1*ch2  /;
+   char                   / ch1*ch2 /;
 Alias (t,h);
 Table gendata(i,*) 'generator cost characteristics and limits'
         a      b     c    CostsD  costst  RU   RD   UT  DT  SD   SU   Pmin Pmax U0 Uini S0
@@ -21,13 +21,10 @@ Parameter data(k,i,*);
 data(k,i,'DP')       =(gendata(i,"Pmax") - gendata(i,"Pmin"))/card(k);
 data(k,i,'Pini')     =(ord(k) - 1)*data(k,i,'DP') + gendata(i,"Pmin");
 data(k,i,'Pfin')     = data(k,i,'Pini') + data(k,i,'DP');
-data(k,i,'Cini')     = gendata(i,"a")*power(data(k,i,'Pini'),2)
-                     + gendata(i,"b")*data(k,i,'Pini') + gendata(i,"c");
-data(k,i,'Cfin')     = gendata(i,"a")*power(data(k,i,'Pfin'),2)
-                     + gendata(i,"b")*data(k,i,'Pfin') + gendata(i,"c");
+data(k,i,'Cini')     = gendata(i,"a")*power(data(k,i,'Pini'),2) + gendata(i,"b")*data(k,i,'Pini') + gendata(i,"c");
+data(k,i,'Cfin')     = gendata(i,"a")*power(data(k,i,'Pfin'),2) + gendata(i,"b")*data(k,i,'Pfin') + gendata(i,"c");
 data(k,i,'s')        =(data(k,i,'Cfin') - data(k,i,'Cini'))/data(k,i,'DP');
-gendata(i,'Mincost') = gendata(i,'a')*power(gendata(i,"Pmin"),2)
-                     + gendata(i,'b')*gendata(i,"Pmin") + gendata(i,'c');
+gendata(i,'Mincost') = gendata(i,'a')*power(gendata(i,"Pmin"),2) + gendata(i,'b')*gendata(i,"Pmin") + gendata(i,'c');
 Table dataLP(t,*)
         lambda  load
    t1   14.72   883
@@ -67,7 +64,7 @@ Positive Variable pu(i,t), p(i,t), StC(i,t), SDC(i,t), Pk(i,t,k);
 Binary Variable u(i,t), y(i,t), z(i,t);
 p.up(i,t)    = gendata(i,"Pmax"); p.lo(i,t)    = 0;
 Pk.up(i,t,k) = data(k,i,'DP'); Pk.lo(i,t,k) = 0;
-p.up(i,t)    = gendata(i,"Pmax"); pu.up(i,h)   = gendata(i,"Pmax");
+pu.up(i,h)   = gendata(i,"Pmax");
 Equation Uptime1, Uptime2, Uptime3, Dntime1, Dntime2, Dntime3, Ramp1, Ramp2, Ramp3, Ramp4,
    startc, shtdnc, genconst1, Genconst2, Genconst3, Genconst4, balance;
 Uptime1(i)$(gendata(i,"Lj")>0).. sum(t$(ord(t)<(gendata(i,"Lj")+1)), 1-U(i,t)) =e= 0;
@@ -94,3 +91,4 @@ balance(t).. sum(i, p(i,t)) =e= dataLP(t,'load');
 Model UCLP / all /;
 option optCr = 0.0;
 solve UCLP minimizing costThermal using mip;
+display data, costThermal.l;
