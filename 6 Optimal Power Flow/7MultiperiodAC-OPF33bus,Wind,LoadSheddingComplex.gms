@@ -1,24 +1,28 @@
-$title Multi-period AC-OPF for IEEE 24-bus network considering wind and load shedding
+$title Multi-period AC-OPF for IEEE 33-bus network considering wind and load shedding
 Set
-   i        'network buses'    / 1*24   /
+   i        'network buses'    / 1*33 /
    slack(i)                    / 13 /
    t                           / t1*t24 /
 
-Scalar Sbase/100/, VOLL 'value of loss of load($/Mwhr)'/20/, VOLW 'value of loss of wind($/Mwhr)'/20/;
+Scalar Sbase/100/, VOLL 'value of loss of load($/Mwhr)'/1000/, VOLW 'value of loss of wind($/Mwhr)'/20/;
 Alias (i,j);
 * good technique to get rid of a set connecting bus & generator
 Table GenD(i,*) 'generating units characteristics'
-       pmax  pmin    b      Qmax  Qmin  Vg     RU  RD
-   1   152   30.4    13.32  192   -50   1.035  21  21
-   2   152   30.4    13.32  192   -50   1.035  21  21
-   7   350   75      20.7   300   0     1.025  43  43
-   13  591   206.85  20.93  591   0     1.02   31  31
-   15  215   66.25   21     215   -100  1.014  31  31
-   16  155   54.25   10.52  155   -50   1.017  31  31
-   18  400   100     5.47   400   -50   1.05   70  70
-   21  400   100     5.47   400   -50   1.05   70  70
-   22  300   0       0      300   -60   1.05   53  53
-   23  360   248.5   10.52  310   -125  1.05   31  31;
+       pmax  pmin    a     b       c     Qmax  Qmin  Vg     RU  RD
+   1   152   30.4    2.3   13.32   14    192   -50   1.035  21  21
+   2   152   30.4    2.3   13.32   14    192   -50   1.035  21  21
+   7   350   75      3.1   20.7    22    300   0     1.025  43  43
+   13  591   206.85  2.4   20.93   22    591   0     1.02   31  31
+   15  215   66.25   2.1   21      22    215   -100  1.014  31  31
+   16  155   54.25   2.6   10.52   11    155   -50   1.017  31  31
+   18  400   100     1.9   5.47    6     400   -50   1.05   70  70
+   20  400   100     1.9   5.47    6     400   -50   1.05   70  70
+   21  300   0       1.1   10      11    300   -60   1.05   53  53
+   22  360   248.5   1.1   10.52   11    310   -125  1.05   31  31
+   25  155   54.25   2.6   10.52   11.3  152   -50   1.02   21  21
+   28  152   30.4    3.1   13.32   14.3  150   -50   1.018  14  14
+   31  400   100     2.2   5.47    6.1   350   -98   1.04   47  47
+   33  400   100     2.2   5.47    6.1   350   -100  1.04   47  47;
 Table BD(i,*) 'demands of each bus in MW & MVar'
        Pd   Qd
    1   108  22
@@ -31,56 +35,68 @@ Table BD(i,*) 'demands of each bus in MW & MVar'
    8   171  35
    9   175  36
    10  195  40
-   11  0    0
-   12  0    0
+   11  14   3
+   12  16   2
    13  265  54
    14  194  39
    15  317  64
    16  100  20
-   17  0    0
+   17  18   3
    18  333  68
    19  181  37
    20  128  26
-   21  0    0
-   22  0    0
-   23  0    0
-   24  0    0 ;
+   21  11   2
+   22  14   3
+   23  12   2
+   24  18   1
+   25  34   6
+   26  180  43
+   27  25   5
+   28  16   2
+   29  100  35
+   30  208  28
+   31  11   2
+   32  9    1
+   33  159  34;
 Table LN(i,j,*) 'network technical characteristics'
-          r        x        b       limit
-   1.2    0.0026   0.0139   0.4611  175
-   1.3    0.0546   0.2112   0.0572  175
-   1.5    0.0218   0.0845   0.0229  175
-   2.4    0.0328   0.1267   0.0343  175
-   2.6    0.0497   0.192    0.052   175
-   3.9    0.0308   0.119    0.0322  175
-   3.24   0.0023   0.0839   0       400
-   4.9    0.0268   0.1037   0.0281  175
-   5.10   0.0228   0.0883   0.0239  175
-   6.10   0.0139   0.0605   2.459   175
-   7.8    0.0159   0.0614   0.0166  175
-   8.9    0.0427   0.1651   0.0447  175
-   8.10   0.0427   0.1651   0.0447  175
-   9.11   0.0023   0.0839   0       400
-   9.12   0.0023   0.0839   0       400
-   10.11  0.0023   0.0839   0       400
-   10.12  0.0023   0.0839   0       400
-   11.13  0.0061   0.0476   0.0999  500
-   11.14  0.0054   0.0418   0.0879  500
-   12.13  0.0061   0.0476   0.0999  500
-   12.23  0.0124   0.0966   0.203   500
-   13.23  0.0111   0.0865   0.1818  500
-   14.16  0.005    0.0389   0.0818  500
-   15.16  0.0022   0.0173   0.0364  500
-   15.21  0.00315  0.0245   0.206   1000
-   15.24  0.0067   0.0519   0.1091  500
-   16.17  0.0033   0.0259   0.0545  500
-   16.19  0.003    0.0231   0.0485  500
-   17.18  0.0018   0.0144   0.0303  500
-   17.22  0.0135   0.1053   0.2212  500
-   18.21  0.00165  0.01295  0.109   1000
-   19.20  0.00255  0.0198   0.1666  1000
-   20.23  0.0014   0.0108   0.091   1000
-   21.22  0.0087   0.0678   0.1424  500 ;
+        r        x        b       limit
+1.2     0.0922   0.0470   0       175
+2.3     0.4930   0.2511   0       175
+3.4     0.3660   0.1864   0       400
+4.5     0.3811   0.1941   0       500
+5.6     0.8190   0.7070   0       200
+6.7     0.1872   0.6188   0       400
+7.8     0.7114   0.2351   0       175
+8.9     1.0300   0.7400   0       1000
+9.10    1.0440   0.7400   0       500
+10.11   0.1966   0.0650   0       400
+11.12   0.3744   0.1238   0       200
+12.13   1.4680   1.1550   0       175
+13.14   0.5416   0.7129   0       400
+14.15   0.5910   0.5260   0       500
+15.16   0.7463   0.5450   0       175
+16.17   1.2890   1.7210   0       400
+17.18   0.7320   0.5740   0       200
+2.19    0.1640   0.1565   0       300
+19.20   1.5042   1.3554   0       400
+20.21   0.4095   0.4784   0       250
+21.22   0.7089   0.9373   0       1000
+3.23    0.4512   0.3083   0       500
+23.24   0.8980   0.7091   0       250
+24.25   0.8960   0.7011   0       175
+6.26    0.2030   0.1034   0       400
+26.27   0.2842   0.1447   0       300
+27.28   1.0590   0.9337   0       600
+28.29   0.8042   0.7006   0       700
+29.30   0.5075   0.2585   0       175
+30.31   0.9744   0.9630   0       500
+31.32   0.3105   0.3619   0       200
+32.33   0.3410   0.5302   0       1000
+21.8    2.0000   2.0000   0       600
+9.15    2.0000   2.0000   0       500
+12.22   2.0000   2.0000   0       250
+18.33   0.5000   0.5000   0       300
+25.29   0.5000   0.5000   0       500;
 Table WD(t,*)
         w                   d
 *  t1   0.                  1.
@@ -129,12 +145,12 @@ eq3(i,t).. Pw(i,t)$Wcap(i) + Pg(i,t)$GenD(i,'Pmax') - WD(t,'d')*BD(i,'pd')/Sbase
 *eq3(i,t).. lsh(i,t)$BD(i,'pd')+Pw(i,t)$Wcap(i)+Pg(i,t)$GenD(i,'Pmax')-WD(t,'d')*BD(i,'pd')/Sbase =e= sum(j$cx(j,i),Pij(i,j,t));
 * with load shedding
 eq4(i,t).. Qg(i,t)$GenD(i,'Qmax')-WD(t,'d')*BD(i,'qd')/Sbase =e= sum(j$cx(j,i),Qij(i,j,t));
-eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'));
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd'));
+eq5.. OF =g= sum((i,t)$GenD(i,'Pmax'),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd'));
 *with load shedding
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLW*Pc(i,t)*sbase$Wcap(i));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLW*Pc(i,t)*sbase$Wcap(i));
 *with wind curtailment
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd')+VOLW*Pc(i,t)*sbase$Wcap(i));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd')+VOLW*Pc(i,t)*sbase$Wcap(i));
 *with load shedding & wind curtailment
 eq6(i,t)$(GenD(i,'Pmax')and ord(t)>1).. Pg(i,t)-Pg(i,t-1) =l= GenD(i,'RU')/Sbase;
 eq7(i,t)$(GenD(i,'Pmax')and ord(t)<card(t)).. Pg(i,t)-Pg(i,t+1) =l= GenD(i,'RD')/Sbase;
@@ -147,24 +163,24 @@ Pij.up(i,j,t)$((cx(i,j)))= 1*LN(i,j,'Limit')/Sbase;
 Pij.lo(i,j,t)$((cx(i,j)))= -1*LN(i,j,'Limit')/Sbase;
 Qij.up(i,j,t)$((cx(i,j)))= 1*LN(i,j,'Limit')/Sbase;
 Qij.lo(i,j,t)$((cx(i,j)))= -1*LN(i,j,'Limit')/Sbase;
-V.lo(i,t)= 0.9; V.up(i,t)= 1.1; V.l(i,t)   = 1;
+V.lo(i,t)= 0.9; V.up(i,t)= 1.1; V.l(i,t)= 1;
 Pw.up(i,t)= WD(t,'d')*Wcap(i)/sbase; Pw.lo(i,t)= 0;
 *lsh.up(i,t)= WD(t,'d')*BD(i,'pd')/Sbase; lsh.lo(i,t)= 0;
 *with load shedding
 *Pc.up(i,t)= WD(t,'w')*Wcap(i)/Sbase; Pc.lo(i,t)= 0;
 *with wind curtailment
 Model loadflow /all/;
-solve loadflow minimizing OF using NLP;
+Solve loadflow minimizing OF using NLP;
 Parameter report(t,i,*), report2(i,t), report3(i,t), Congestioncost, lmp(i,t);
 report(t,i,'V')     = V.l(i,t);
 report(t,i,'Angle') = Va.l(i,t);
 report(t,i,'Pg')    = Pg.l(i,t)*Sbase;
-report(t,i,'Gg')    = Qg.l(i,t)*Sbase;
+report(t,i,'Qg')    = Qg.l(i,t)*Sbase;
 report(t,i,'LMP_P') = eq3.m(i,t)/Sbase;
 report(t,i,'LMP_Q') = eq4.m(i,t)/Sbase;
 report2(i,t)        = Pg.l(i,t)*Sbase;
 report3(i,t)        = Qg.l(i,t)*Sbase;
 display LN, cx, report, OF.l, Pij.l, Qij.l, Pg.l, Qg.l, V.l, Va.l, Pw.l;
-* OF = 419396.545 on correct execution
+* OF = 1.812626*e7 on correct execution
 *display lsh.l (for load shedding)
 *display Pc.l (for wind curtailment)

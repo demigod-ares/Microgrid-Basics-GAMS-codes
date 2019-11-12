@@ -3,19 +3,19 @@ Set bus/1*24/, slack(bus)/13/, Gen/g1*g12/, t/t1*t24/;
 Scalar Sbase/100/, VOLL 'value of loss of load($/Mwhr)'/10000/, VOLW 'value of loss of wind($/Mwhr)'/50/;
 Alias (bus,node);
 Table GD(Gen,*) 'generating units characteristics'
-        Pmax Pmin   b     CostsD costst RU   RD   SU   SD   UT   DT   uini U0  So
-   g1   400  100    5.47  0      0      47   47   105  108  1    1    1    5   0
-   g2   400  100    5.47  0      0      47   47   106  112  1    1    1    6   0
-   g3   152  30.4   13.32 1430.4 1430.4 14   14   43   45   8    4    1    2   0
-   g4   152  30.4   13.32 1430.4 1430.4 14   14   44   57   8    4    1    2   0
-   g5   155  54.25  16    0      0      21   21   65   77   8    8    0    0   2
-   g6   155  54.25  10.52 312    312    21   21   66   73   8    8    1    10  0
-   g7   310  108.5  10.52 624    624    21   21   112  125  8    8    1    10  0
-   g8   350  140    10.89 2298   2298   28   28   154  162  8    8    1    5   0
-   g9   350  75     20.7  1725   1725   49   49   77   80   8    8    0    0   2
-   g10  591  206.85 20.93 3056.7 3056.7 21   21   213  228  12   10   0    0   8
-   g11  60   12     26.11 437    437    7    7    19   31   4    2    0    0   1
-   g12  300  0      0     0      0      35   35   315  326  0    0    1    2   0;
+        Pmax Pmin    a     b      c     CostsD costst RU   RD   SU   SD   UT   DT   uini U0  So
+   g1   400  100     2.2   5.47   6.1   0      0      47   47   105  108  1    1    1    5   0
+   g2   400  100     2.2   5.47   6.1   0      0      47   47   106  112  1    1    1    6   0
+   g3   152  30.4    3.1   13.32  14.3  1430.4 1430.4 14   14   43   45   8    4    1    2   0
+   g4   152  30.4    3.1   13.32  14.3  1430.4 1430.4 14   14   44   57   8    4    1    2   0
+   g5   155  54.25   3.5   16     16.5  0      0      21   21   65   77   8    8    0    0   2
+   g6   155  54.25   2.6   10.52  11.3  312    312    21   21   66   73   8    8    1    10  0
+   g7   310  108.5   2.6   10.52  11.3  624    624    21   21   112  125  8    8    1    10  0
+   g8   350  140     2.3   10.89  11.4  2298   2298   28   28   154  162  8    8    1    5   0
+   g9   350  75      3.5   20.7   21.1  1725   1725   49   49   77   80   8    8    0    0   2
+   g10  591  206.85  3.5   20.93  21.5  3056.7 3056.7 21   21   213  228  12   10   0    0   8
+   g11  60   12      3.5   26.11  28.1  437    437    7    7    19   31   4    2    0    0   1
+   g12  300  36      1.1   5.01   5.01  0      0      35   35   315  326  0    0    1    2   0;
 Set GB(bus,Gen) 'connectivity index of each generating unit to each bus'
 /18.g1, 21.g2, 1.g3, 2.g4, 15.g5, 16.g6, 23.g7, 23.g8, 7.g9, 13.g10, 15.g11, 22.g12/;
 Table BusData(bus,*) 'demands of each bus in MW'
@@ -111,7 +111,7 @@ Variable OF, Pij(bus,node,t), Pg(Gen,t), delta(bus,t), lsh(bus,t), Pw(bus,t), Pc
 Equation const1, const2, const3, const4, const5, const6;
 const1(bus,node,t)$(conex(bus,node)).. Pij(bus,node,t) =e= branch(bus,node,'bij')*(delta(bus,t)-delta(node,t));
 const2(bus,t).. lsh(bus,t)$BusData(bus,'pd')+Pw(bus,t)$Wcap(bus)+sum(Gen$GB(bus,Gen),Pg(Gen,t))-WD(t,'d')*BusData(bus,'pd')/Sbase =e= sum(node$conex(node,bus),Pij(bus,node,t));
-const3.. OF =g= sum((bus,Gen,t)$GB(bus,Gen),Pg(Gen,t)*GD(Gen,'b')*Sbase)+sum((bus,t),VOLL*lsh(bus,t)*Sbase$BusData(bus,'pd')+VOLW*Pc(bus,t)*sbase$Wcap(bus));
+const3.. OF =g= sum((bus,Gen,t)$GB(bus,Gen),sqr(Pg(Gen,t)*Sbase)*GD(Gen,'a')+Pg(Gen,t)*Sbase*GD(Gen,'b')+GD(Gen,'c'))+sum((bus,t),VOLL*lsh(bus,t)*Sbase$BusData(bus,'pd')+VOLW*Pc(bus,t)*sbase$Wcap(bus));
 const4(gen,t).. pg(gen,t+1)-pg(gen,t) =l= GD(gen,'RU')/Sbase;
 const5(gen,t).. pg(gen,t-1)-pg(gen,t) =l= GD(gen,'RD')/Sbase;
 const6(bus,t)$Wcap(bus).. pc(bus,t) =e= WD(t,'w')*Wcap(bus)/Sbase-pw(bus,t);
@@ -123,5 +123,5 @@ lsh.up(bus,t)= WD(t,'d')*BusData(bus,'pd')/Sbase; lsh.lo(bus,t)= 0;
 Pw.up(bus,t)= WD(t,'w')*Wcap(bus)/Sbase; Pw.lo(bus,t)= 0;
 Pc.up(bus,t)= WD(t,'w')*Wcap(bus)/Sbase; Pc.lo(bus,t)= 0;
 Model loadflow /all/;
-Solve loadflow minimizing OF using LP;
+Solve loadflow minimizing OF using QCP;
 Display branch, OF.l, Pij.l, Pg.l, delta.l, lsh.l, Pw.l, Pc.l;

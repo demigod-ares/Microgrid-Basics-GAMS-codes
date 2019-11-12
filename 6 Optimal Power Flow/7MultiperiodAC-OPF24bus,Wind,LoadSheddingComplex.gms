@@ -1,24 +1,24 @@
 $title Multi-period AC-OPF for IEEE 24-bus network considering wind and load shedding
 Set
-   i        'network buses'    / 1*24   /
+   i        'network buses'    / 1*24 /
    slack(i)                    / 13 /
    t                           / t1*t24 /
 
-Scalar Sbase/100/, VOLL 'value of loss of load($/Mwhr)'/20/, VOLW 'value of loss of wind($/Mwhr)'/20/;
+Scalar Sbase/100/, VOLL 'value of loss of load($/Mwhr)'/1000/, VOLW 'value of loss of wind($/Mwhr)'/20/;
 Alias (i,j);
 * good technique to get rid of a set connecting bus & generator
 Table GenD(i,*) 'generating units characteristics'
-       pmax  pmin    b      Qmax  Qmin  Vg     RU  RD
-   1   152   30.4    13.32  192   -50   1.035  21  21
-   2   152   30.4    13.32  192   -50   1.035  21  21
-   7   350   75      20.7   300   0     1.025  43  43
-   13  591   206.85  20.93  591   0     1.02   31  31
-   15  215   66.25   21     215   -100  1.014  31  31
-   16  155   54.25   10.52  155   -50   1.017  31  31
-   18  400   100     5.47   400   -50   1.05   70  70
-   21  400   100     5.47   400   -50   1.05   70  70
-   22  300   0       0      300   -60   1.05   53  53
-   23  360   248.5   10.52  310   -125  1.05   31  31;
+       pmax  pmin    a      b       c    Qmax  Qmin  Vg     RU  RD
+   1   152   30.4    2.3    13.32   14   192   -50   1.035  21  21
+   2   152   30.4    2.3    13.32   14   192   -50   1.035  21  21
+   7   350   75      3.1    20.7    22   300   0     1.025  43  43
+   13  591   206.85  2.4    20.93   22   591   0     1.02   31  31
+   15  215   66.25   2.1    21      22   215   -100  1.014  31  31
+   16  155   54.25   2.6    10.52   11   155   -50   1.017  31  31
+   18  400   100     1.9    5.47    6    400   -50   1.05   70  70
+   21  400   100     1.9    5.47    6    400   -50   1.05   70  70
+   22  300   0       1.1    10      11   300   -60   1.05   53  53
+   23  360   248.5   1.1    10.52   11   310   -125  1.05   31  31;
 Table BD(i,*) 'demands of each bus in MW & MVar'
        Pd   Qd
    1   108  22
@@ -31,20 +31,20 @@ Table BD(i,*) 'demands of each bus in MW & MVar'
    8   171  35
    9   175  36
    10  195  40
-   11  0    0
-   12  0    0
+   11  14   3
+   12  16   2
    13  265  54
    14  194  39
    15  317  64
    16  100  20
-   17  0    0
+   17  18   3
    18  333  68
    19  181  37
    20  128  26
-   21  0    0
-   22  0    0
-   23  0    0
-   24  0    0 ;
+   21  11   2
+   22  14   3
+   23  12   2
+   24  18   1 ;
 Table LN(i,j,*) 'network technical characteristics'
           r        x        b       limit
    1.2    0.0026   0.0139   0.4611  175
@@ -129,12 +129,12 @@ eq3(i,t).. Pw(i,t)$Wcap(i) + Pg(i,t)$GenD(i,'Pmax') - WD(t,'d')*BD(i,'pd')/Sbase
 *eq3(i,t).. lsh(i,t)$BD(i,'pd')+Pw(i,t)$Wcap(i)+Pg(i,t)$GenD(i,'Pmax')-WD(t,'d')*BD(i,'pd')/Sbase =e= sum(j$cx(j,i),Pij(i,j,t));
 * with load shedding
 eq4(i,t).. Qg(i,t)$GenD(i,'Qmax')-WD(t,'d')*BD(i,'qd')/Sbase =e= sum(j$cx(j,i),Qij(i,j,t));
-eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'));
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd'));
+eq5.. OF =g= sum((i,t)$GenD(i,'Pmax'),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd'));
 *with load shedding
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLW*Pc(i,t)*sbase$Wcap(i));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLW*Pc(i,t)*sbase$Wcap(i));
 *with wind curtailment
-*eq5.. OF =g= sum((i,t),Pg(i,t)*GenD(i,'b')*Sbase$GenD(i,'Pmax'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd')+VOLW*Pc(i,t)*sbase$Wcap(i));
+*eq5.. OF =g= sum((i,t),sqr(Pg(i,t)*Sbase)*GenD(i,'a')+Pg(i,t)*Sbase*GenD(i,'b')+GenD(i,'c'))+sum((i,t),VOLL*lsh(i,t)*Sbase$BD(i,'pd')+VOLW*Pc(i,t)*sbase$Wcap(i));
 *with load shedding & wind curtailment
 eq6(i,t)$(GenD(i,'Pmax')and ord(t)>1).. Pg(i,t)-Pg(i,t-1) =l= GenD(i,'RU')/Sbase;
 eq7(i,t)$(GenD(i,'Pmax')and ord(t)<card(t)).. Pg(i,t)-Pg(i,t+1) =l= GenD(i,'RD')/Sbase;
@@ -147,14 +147,14 @@ Pij.up(i,j,t)$((cx(i,j)))= 1*LN(i,j,'Limit')/Sbase;
 Pij.lo(i,j,t)$((cx(i,j)))= -1*LN(i,j,'Limit')/Sbase;
 Qij.up(i,j,t)$((cx(i,j)))= 1*LN(i,j,'Limit')/Sbase;
 Qij.lo(i,j,t)$((cx(i,j)))= -1*LN(i,j,'Limit')/Sbase;
-V.lo(i,t)= 0.9; V.up(i,t)= 1.1; V.l(i,t)   = 1;
+V.lo(i,t)= 0.9; V.up(i,t)= 1.1; V.l(i,t)= 1;
 Pw.up(i,t)= WD(t,'d')*Wcap(i)/sbase; Pw.lo(i,t)= 0;
 *lsh.up(i,t)= WD(t,'d')*BD(i,'pd')/Sbase; lsh.lo(i,t)= 0;
 *with load shedding
 *Pc.up(i,t)= WD(t,'w')*Wcap(i)/Sbase; Pc.lo(i,t)= 0;
 *with wind curtailment
 Model loadflow /all/;
-solve loadflow minimizing OF using NLP;
+Solve loadflow minimizing OF using NLP;
 Parameter report(t,i,*), report2(i,t), report3(i,t), Congestioncost, lmp(i,t);
 report(t,i,'V')     = V.l(i,t);
 report(t,i,'Angle') = Va.l(i,t);
@@ -165,6 +165,6 @@ report(t,i,'LMP_Q') = eq4.m(i,t)/Sbase;
 report2(i,t)        = Pg.l(i,t)*Sbase;
 report3(i,t)        = Qg.l(i,t)*Sbase;
 display LN, cx, report, OF.l, Pij.l, Qij.l, Pg.l, Qg.l, V.l, Va.l, Pw.l;
-* OF = 419396.545 on correct execution
+* OF = 1.885451*e7 on correct execution
 *display lsh.l (for load shedding)
 *display Pc.l (for wind curtailment)
